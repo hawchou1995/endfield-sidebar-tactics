@@ -1,1 +1,185 @@
+/* ==========================================================================
+   Endfield Tactical Sidebar (终末地战术侧边栏总控)
+   ========================================================================== */
 
+/* 1. 全局侧边栏容器改造 */
+.tc-right-sidebar {
+  font-family: "Rajdhani", "Noto Sans SC", sans-serif;
+
+  /* 统一所有基础块的样式：剥离白板，换上战术涂装 */
+  .rs-component {
+    background: rgba(var(--primary-rgb), 0.03) !important;
+    border: 1px solid var(--primary-low) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    
+    /* 背景网格雷达纹理 */
+    background-image: 
+      linear-gradient(to right, var(--tertiary-low) 1px, transparent 1px), 
+      linear-gradient(to bottom, var(--tertiary-low) 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    
+    /* 模块标题统一赛博朋克化 */
+    h3 {
+      font-family: "Rajdhani", "JetBrains Mono", sans-serif;
+      font-size: 1.1em;
+      font-weight: 800 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary) !important;
+      background: rgba(var(--tertiary-rgb), 0.1);
+      padding: 8px 12px;
+      margin: 0;
+      border-bottom: 1px solid var(--tertiary-medium);
+      border-left: 4px solid var(--tertiary);
+    }
+  }
+
+  /* 通用查看全部按钮 */
+  a[class$="view-all"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+    font-size: 11px;
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--primary-medium);
+    border-top: 1px solid var(--tertiary-low);
+    background: rgba(var(--tertiary-rgb), 0.02);
+    transition: all 0.2s;
+
+    &::before { content: ">>"; margin-right: 6px; color: var(--tertiary); }
+    &:hover {
+      color: var(--secondary);
+      background: var(--quaternary);
+      border-color: var(--quaternary);
+      text-decoration: none;
+      &::before { color: var(--secondary); content: ">>>"; }
+    }
+  }
+}
+
+/* ============================================
+   2. 热门标签 (Tag Matrix) - 已集成修正
+   ============================================ */
+.popular-tags__container {
+  display: flex !important; flex-direction: column; margin: 10px auto; position: relative; z-index: 0;
+  min-height: 120px; height: auto; box-sizing: border-box; background: transparent !important;
+  background-image: linear-gradient(var(--tertiary-low) 1px, transparent 1px), linear-gradient(90deg, var(--tertiary-low) 1px, transparent 1px) !important;
+  background-size: 12px 12px !important;
+  --hud-color: var(--tertiary); border: 1px solid var(--tertiary-low);
+  
+  &::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+    background: 
+      linear-gradient(to right, var(--hud-color) 2px, transparent 2px) top left, linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px) top left,
+      linear-gradient(to left, var(--hud-color) 2px, transparent 2px) top right, linear-gradient(to bottom, var(--hud-color) 2px, transparent 2px) top right,
+      linear-gradient(to right, var(--hud-color) 2px, transparent 2px) bottom left, linear-gradient(to top, var(--hud-color) 2px, transparent 2px) bottom left,
+      linear-gradient(to left, var(--hud-color) 2px, transparent 2px) bottom right, linear-gradient(to top, var(--hud-color) 2px, transparent 2px) bottom right;
+    background-size: 8px 8px; background-repeat: no-repeat; opacity: 0.6;
+  }
+}
+
+.popular-tags__grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); grid-auto-rows: 26px; gap: 6px;
+  padding: 12px; width: 100%; box-sizing: border-box;
+  @media (max-width: 400px) { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); }
+}
+
+.popular-tags__tag {
+  display: flex; align-items: center; justify-content: flex-start; padding: 0 10px 0 4px !important; margin: 0 !important;
+  width: 100%; min-width: 0; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+  font-family: "JetBrains Mono", "Rajdhani", "Noto Sans SC", monospace !important;
+  font-size: 11px !important; text-transform: uppercase; font-weight: 600;
+  background: rgba(var(--primary-rgb), 0.05) !important; border: 1px solid var(--tertiary-low) !important; border-radius: 2px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative;
+  
+  .tag-icon, .d-icon { margin-right: 4px; font-size: 0.9em; flex-shrink: 0; }
+  &::after { content: ""; position: absolute; top: 50%; right: 3px; transform: translateY(-50%); width: 4px; height: 4px; background: var(--tertiary-low); border-radius: 50%; opacity: 0.5; transition: all 0.2s; }
+  
+  &[data-hot="true"] {
+    background: rgba(var(--quaternary-rgb), 0.1) !important; border-color: var(--quaternary) !important; color: var(--quaternary) !important; font-weight: 700;
+    &::after { background: var(--quaternary); opacity: 1; }
+  }
+  
+  &:hover {
+    background: var(--tertiary) !important; color: var(--secondary) !important; border-color: var(--tertiary) !important; box-shadow: 0 0 12px var(--tertiary-low); z-index: 10;
+    .tag-icon svg, .d-icon { color: var(--secondary) !important; fill: var(--secondary) !important; }
+    text-overflow: visible; .popular-tags__tag-text { animation: marquee-scroll 3s linear infinite; }
+    &::after { background: var(--primary); opacity: 1; width: 6px; height: 6px; }
+  }
+}
+
+.popular-tags__tag-text { display: inline-block; animation-play-state: paused; }
+@keyframes marquee-scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
+.popular-tags__tag.long-tag { text-overflow: ellipsis; }
+.popular-tags__tag.long-tag:hover { text-overflow: visible; .popular-tags__tag-text { display: flex; &::before, &::after { content: attr(data-text); white-space: nowrap; margin-left: 20px; } animation: marquee-scroll 4s linear infinite; } }
+.popular-tags__tag-count { position: absolute; top: -4px; right: -4px; font-size: 9px; font-weight: 700; padding: 1px 4px; background: var(--quaternary); color: var(--secondary); border-radius: 2px; pointer-events: none; }
+
+/* ============================================
+   3. 站点统计 (HUD Data Panel)
+   ============================================ */
+.sidebar-stats-block { padding: 10px; }
+.sidebar-stats-grid {
+  display: grid !important; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; margin-bottom: 0px;
+}
+.sidebar-stat-item {
+  box-sizing: border-box; padding: 6px 8px; background: rgba(var(--primary-rgb), 0.05); border: 1px solid var(--primary-low); border-left: 3px solid var(--tertiary-medium); transition: all 0.2s ease; position: relative; overflow: hidden;
+  &:hover { background: rgba(var(--tertiary-rgb), 0.1); border-left-color: var(--tertiary); border-color: var(--tertiary-medium); transform: translateY(-1px); .s-value { text-shadow: 0 0 8px var(--tertiary); } .s-label { color: var(--tertiary); } }
+}
+.s-label { display: block; color: var(--primary-medium); font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: "JetBrains Mono", monospace; line-height: 1.2; }
+.s-value { display: block; font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: 1.2em; color: var(--primary); margin-top: 2px; transition: text-shadow 0.2s; }
+
+/* ============================================
+   4. 快速入门 (Tag Topics) - 极简标题流
+   ============================================ */
+.rs-tag-topics {
+  .tag-topics__container { padding: 8px; }
+  .tag-topics__topic {
+    display: flex; align-items: center; padding: 6px 0 !important; border-bottom: 1px dashed var(--primary-low) !important; transition: all 0.2s;
+    &:last-child { border-bottom: none !important; }
+    &:hover { transform: translateX(4px); .tag-topics__topic-link { color: var(--tertiary) !important; text-shadow: 0 0 5px rgba(var(--tertiary-rgb), 0.5); } }
+    
+    .tag-topics__date, .top-topics__category, .tag-topics__col:not(:first-child) { display: none !important; }
+    .tag-topics__col:first-child { width: 100% !important; flex: 1 1 100% !important; max-width: 100% !important; margin: 0 !important; }
+    .tag-topics__topic-title {
+      line-height: 1.4; width: 100%; position: relative; padding-left: 12px;
+      &::before { content: ">"; position: absolute; left: 0; top: 0; color: var(--quaternary); font-family: monospace; font-size: 0.9em; font-weight: bold; }
+      .tag-topics__topic-link { font-size: 0.9em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--primary); font-weight: 600; transition: color 0.2s; }
+    }
+  }
+}
+
+/* ============================================
+   5. 最近回复 & 周榜 (User Lists) - 赛博紧凑化
+   ============================================ */
+.rs-recent-replies, .rs-top-contributors {
+  .recent-replies--container, .top-contributors--container { padding: 8px; }
+  
+  .recent-replies--reply, .top-contributors--user {
+    display: flex; align-items: center; padding: 6px 4px !important; margin-bottom: 4px; background: rgba(var(--primary-rgb), 0.02); border-radius: 4px; border: 1px solid transparent; transition: all 0.2s;
+    &:hover { background: rgba(var(--tertiary-rgb), 0.05); border-color: var(--tertiary-low); transform: scale(1.02); }
+  }
+
+  /* 头像统一战术切角，覆盖默认圆形 */
+  img.avatar { border-radius: 0 !important; clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%); width: 20px !important; height: 20px !important; }
+  
+  /* 最近回复精简 */
+  .recent-replies--excerpt { display: none !important; } /* 隐藏废话摘要 */
+  .recent-replies--topic-title {
+    margin-top: 0 !important; margin-left: 8px;
+    .recent-replies--topic-link { font-size: 0.85em; font-weight: 600; color: var(--primary); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  }
+  .recent-replies--date { font-size: 0.75em; font-family: "JetBrains Mono", monospace; color: var(--quaternary); opacity: 0.8; margin-left: auto; white-space: nowrap; }
+
+  /* 周榜精简 */
+  .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .top-contributors--user-likes {
+    margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--love); font-weight: bold; background: rgba(var(--love-rgb), 0.1); padding: 2px 6px; border-radius: 2px;
+    .d-icon { margin-left: 4px; font-size: 0.9em; }
+  }
+}
