@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Endfield Tactical Sidebar (终末地战术侧边栏总控) - 纯血无 RGB 版
+   Endfield Tactical Sidebar (终末地战术侧边栏总控) - 终极通透版
    ========================================================================== */
 
 /* 1. 全局侧边栏容器改造 */
@@ -8,7 +8,8 @@
 
   /* 统一所有基础块的样式：剥离白板，换上战术涂装 */
   .rs-component {
-    background: var(--primary-very-low) !important; /* 剔除 primary-rgb */
+    /* [恢复透明度] 错杀平反：使用极低透明度的基础色，透出深色背景 */
+    background: rgba(var(--primary-rgb), 0.02) !important; 
     border: 1px solid var(--primary-low) !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 20px;
@@ -29,7 +30,7 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--primary) !important;
-      background: var(--tertiary-low); /* 剔除 tertiary-rgb，采用绝对青色 */
+      background: var(--tertiary-low);
       padding: 8px 12px;
       margin: 0;
       border-bottom: 1px solid var(--tertiary-medium);
@@ -43,7 +44,7 @@
     padding: 6px 0; font-size: 11px; font-family: "JetBrains Mono", monospace;
     letter-spacing: 1px; text-transform: uppercase; color: var(--primary-medium);
     border-top: 1px solid var(--tertiary-low);
-    background: var(--d-hover); /* 剔除 tertiary-rgb */
+    background: var(--d-hover); 
     transition: all 0.2s;
 
     &::before { content: ">>"; margin-right: 6px; color: var(--tertiary); }
@@ -84,7 +85,9 @@
   width: 100%; min-width: 0; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
   font-family: "JetBrains Mono", "Rajdhani", "Noto Sans SC", monospace !important;
   font-size: 11px !important; text-transform: uppercase; font-weight: 600;
-  background: var(--primary-very-low) !important; /* 剔除 primary-rgb */
+  
+  /* [恢复透明度] 让标签也能透出底部的网格 */
+  background: rgba(var(--primary-rgb), 0.04) !important; 
   border: 1px solid var(--tertiary-low) !important; border-radius: 2px !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative;
   
@@ -92,7 +95,7 @@
   &::after { content: ""; position: absolute; top: 50%; right: 3px; transform: translateY(-50%); width: 4px; height: 4px; background: var(--tertiary-low); border-radius: 50%; opacity: 0.5; transition: all 0.2s; }
   
   &[data-hot="true"] {
-    background: rgba(255, 107, 53, 0.1) !important; /* 剔除 quaternary-rgb，强制绑定终末地橙色 */
+    background: rgba(255, 107, 53, 0.1) !important; 
     border-color: var(--quaternary) !important; color: var(--quaternary) !important; font-weight: 700;
     &::after { background: var(--quaternary); opacity: 1; }
   }
@@ -118,10 +121,11 @@
 .sidebar-stats-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; margin-bottom: 0px; }
 .sidebar-stat-item {
   box-sizing: border-box; padding: 6px 8px; 
-  background: var(--primary-very-low); /* 剔除 primary-rgb */
+  /* [恢复透明度] 半透明方块，完美展现底层网格 */
+  background: rgba(var(--primary-rgb), 0.04); 
   border: 1px solid var(--primary-low); border-left: 3px solid var(--tertiary-medium); transition: all 0.2s ease; position: relative; overflow: hidden;
   &:hover { 
-    background: var(--tertiary-low); /* 剔除 tertiary-rgb */
+    background: var(--tertiary-low); 
     border-left-color: var(--tertiary); border-color: var(--tertiary-medium); transform: translateY(-1px); 
     .s-value { text-shadow: 0 0 8px var(--tertiary); } .s-label { color: var(--tertiary); } 
   }
@@ -137,7 +141,7 @@
   .tag-topics__topic {
     display: flex; align-items: center; padding: 6px 0 !important; border-bottom: 1px dashed var(--primary-low) !important; transition: all 0.2s;
     &:last-child { border-bottom: none !important; }
-    &:hover { transform: translateX(4px); .tag-topics__topic-link { color: var(--tertiary) !important; text-shadow: 0 0 5px var(--tertiary-medium); } } /* 剔除 tertiary-rgb */
+    &:hover { transform: translateX(4px); .tag-topics__topic-link { color: var(--tertiary) !important; text-shadow: 0 0 5px var(--tertiary-medium); } } 
     
     .tag-topics__date, .top-topics__category, .tag-topics__col:not(:first-child) { display: none !important; }
     .tag-topics__col:first-child { width: 100% !important; flex: 1 1 100% !important; max-width: 100% !important; margin: 0 !important; }
@@ -157,10 +161,11 @@
   
   .recent-replies--reply, .top-contributors--user {
     display: flex; align-items: center; padding: 6px 4px !important; margin-bottom: 4px; 
-    background: var(--primary-very-low); /* 剔除 primary-rgb */
+    /* [恢复透明度] 移除遮挡，透出网格 */
+    background: rgba(var(--primary-rgb), 0.02); 
     border-radius: 4px; border: 1px solid transparent; transition: all 0.2s;
     &:hover { 
-      background: var(--d-hover); /* 剔除 tertiary-rgb */
+      background: var(--d-hover); 
       border-color: var(--tertiary-low); transform: scale(1.02); 
     }
   }
@@ -186,7 +191,7 @@
   .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
   .top-contributors--user-likes {
     margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--love); font-weight: bold; 
-    background: rgba(255, 107, 53, 0.1); /* 剔除 love-rgb，绑定橙色 */
+    background: rgba(255, 107, 53, 0.1); 
     padding: 2px 6px; border-radius: 2px;
     .d-icon { margin-left: 4px; font-size: 0.9em; }
   }
