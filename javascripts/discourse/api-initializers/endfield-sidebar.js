@@ -1,4 +1,3 @@
-
 import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer("0.8", (api) => {
@@ -102,7 +101,8 @@ export default apiInitializer("0.8", (api) => {
         if(container.id === 'about-stats-content') {
              container.innerHTML = html;
         } else {
-             container.innerHTML = `<div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--primary-low);">站点统计</div><div id="about-stats-content">${html}</div>`;
+             // 🚨 这里已经为你替换成了 <h3> 标签，完美适配青色切角边框！
+             container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content">${html}</div>`;
         }
         container.dataset.statsLoaded = "true";
       })
