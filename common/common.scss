@@ -6,9 +6,7 @@
 .tc-right-sidebar {
   font-family: "Rajdhani", "Noto Sans SC", sans-serif;
 
-  /* 统一所有基础块的样式：剥离白板，换上战术涂装 */
   .rs-component {
-    /* [恢复透明度] 错杀平反：使用极低透明度的基础色，透出深色背景 */
     background: rgba(var(--primary-rgb), 0.02) !important; 
     border: 1px solid var(--primary-low) !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -16,13 +14,11 @@
     position: relative;
     overflow: hidden;
     
-    /* 背景网格雷达纹理 */
     background-image: 
       linear-gradient(to right, var(--tertiary-low) 1px, transparent 1px), 
       linear-gradient(to bottom, var(--tertiary-low) 1px, transparent 1px) !important;
     background-size: 20px 20px !important;
     
-    /* 模块标题统一赛博朋克化 */
     h3 {
       font-family: "Rajdhani", "JetBrains Mono", sans-serif;
       font-size: 1.1em;
@@ -38,7 +34,6 @@
     }
   }
 
-  /* 通用查看全部按钮 */
   a[class$="view-all"] {
     display: flex; align-items: center; justify-content: center;
     padding: 6px 0; font-size: 11px; font-family: "JetBrains Mono", monospace;
@@ -86,7 +81,6 @@
   font-family: "JetBrains Mono", "Rajdhani", "Noto Sans SC", monospace !important;
   font-size: 11px !important; text-transform: uppercase; font-weight: 600;
   
-  /* [恢复透明度] 让标签也能透出底部的网格 */
   background: rgba(var(--primary-rgb), 0.04) !important; 
   border: 1px solid var(--tertiary-low) !important; border-radius: 2px !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative;
@@ -121,7 +115,6 @@
 .sidebar-stats-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; margin-bottom: 0px; }
 .sidebar-stat-item {
   box-sizing: border-box; padding: 6px 8px; 
-  /* [恢复透明度] 半透明方块，完美展现底层网格 */
   background: rgba(var(--primary-rgb), 0.04); 
   border: 1px solid var(--primary-low); border-left: 3px solid var(--tertiary-medium); transition: all 0.2s ease; position: relative; overflow: hidden;
   &:hover { 
@@ -161,7 +154,6 @@
   
   .recent-replies--reply, .top-contributors--user {
     display: flex; align-items: center; padding: 6px 4px !important; margin-bottom: 4px; 
-    /* [恢复透明度] 移除遮挡，透出网格 */
     background: rgba(var(--primary-rgb), 0.02); 
     border-radius: 4px; border: 1px solid transparent; transition: all 0.2s;
     &:hover { 
@@ -170,16 +162,49 @@
     }
   }
 
-  /* 头像统一战术切角，覆盖默认圆形 */
   img.avatar { border-radius: 0 !important; clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%); width: 24px !important; height: 24px !important; }
   
-  /* 让中间的文本列能够自适应并防溢出 */
   .recent-replies--col:nth-child(2) { margin-left: 8px; flex: 1; min-width: 0; }
 
-  /* 恢复回复内容，并强制单行截断防刷屏 */
-  .recent-replies--excerpt { display: -webkit-box !important; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.85em; color: var(--primary); line-height: 1.3; } 
+  /* ==========================================================
+     [新增/修改]：由 JS 动态创建的 Flex 行容器，强制用户名和评论同行
+     ========================================================== */
+  .recent-replies--user-excerpt-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    flex-wrap: nowrap; /* 核心：绝对不允许换行 */
+    margin-bottom: 2px;
+  }
 
-  /* 话题标题作为辅助来源显示 */
+  /* 防御性设计：防止极端长用户名挤没评论 */
+  .recent-replies--username {
+    flex-shrink: 0;
+    max-width: 45%; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    font-size: 0.85em;
+    margin-right: 6px;
+    color: var(--primary);
+  }
+
+  /* 彻底重写的评论截断逻辑，替代原本的 -webkit-box */
+  .recent-replies--excerpt { 
+    flex: 1;       /* 占据剩余全部空间 */
+    min-width: 0;  /* 🚨 Flex 截断核心防御：允许子元素收缩到比内容小 */
+    white-space: nowrap !important; 
+    overflow: hidden !important; 
+    text-overflow: ellipsis !important; 
+    display: block !important; 
+    font-size: 0.85em; 
+    color: var(--primary-medium); /* 稍微调暗评论颜色，突出层次感 */
+    line-height: 1.3; 
+    cursor: help; /* 鼠标悬停时显示问号指针，提示有 title 可看 */
+  } 
+
   .recent-replies--topic-title {
     margin-top: 2px !important; 
     .recent-replies--topic-link { font-size: 0.75em; font-weight: 600; color: var(--tertiary); opacity: 0.8; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.2s; &:hover { opacity: 1; } }
@@ -187,7 +212,6 @@
 
   .recent-replies--date { font-size: 0.75em; font-family: "JetBrains Mono", monospace; color: var(--quaternary); opacity: 0.8; margin-left: 6px; white-space: nowrap; flex-shrink: 0; }
 
-  /* 周榜精简 */
   .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
   .top-contributors--user-likes {
     margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--love); font-weight: bold; 
