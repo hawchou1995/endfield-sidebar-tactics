@@ -73,7 +73,6 @@ export default apiInitializer("0.8", (api) => {
 
   // 核心 2：站点统计获取
   const fetchAndRenderStats = () => {
-    // 兼容大多数自定义 HTML 区块的探测
     const container = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
     if (!container) return;
     if (container.dataset.statsLoaded === "true") return;
@@ -82,7 +81,7 @@ export default apiInitializer("0.8", (api) => {
       .then(r => r.json())
       .then(data => {
         const s = (data.about && data.about.stats) || {};
-        const statsMap = [
+        const statsMap =[
           { label: "TOPICS", value: s.topics_count || 0 },
           { label: "POSTS", value: s.posts_count || 0 },
           { label: "USERS", value: s.users_count || 0 },
@@ -97,11 +96,9 @@ export default apiInitializer("0.8", (api) => {
         });
         html += '</div>';
         
-        // 如果是原始容器，清空重写；如果是包裹容器，追加
         if(container.id === 'about-stats-content') {
              container.innerHTML = html;
         } else {
-             // 🚨 这里已经为你替换成了 <h3> 标签，完美适配青色切角边框！
              container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content">${html}</div>`;
         }
         container.dataset.statsLoaded = "true";
@@ -117,11 +114,50 @@ export default apiInitializer("0.8", (api) => {
     });
   };
 
+  /* ==========================================================
+     [新增/修改] 核心 4：处理最近回复的单行截断与 Title 提示
+     ========================================================== */
+  const formatRecentReplies = () => {
+    document.querySelectorAll('.recent-replies--reply').forEach(reply => {
+      const excerpt = reply.querySelector('.recent-replies--excerpt');
+      
+      // 1. 提取纯文本并注入 title 属性（悬停显示全量文本）
+      if (excerpt && !excerpt.hasAttribute('title')) {
+        // 使用正则替换掉多余的换行和空格，保持 tooltip 干净
+        const cleanText = excerpt.textContent.replace(/\s+/g, ' ').trim();
+        if (cleanText) {
+          excerpt.setAttribute('title', cleanText);
+        }
+      }
+
+      // 2. DOM 结构重组：将 username 和 excerpt 放入同一个 flex 容器
+      const col2 = reply.querySelector('.recent-replies--col:nth-child(2)');
+      // 使用 dataset 确保不会被重复包裹
+      if (col2 && !col2.dataset.flexFormatted) {
+        const username = col2.querySelector('.recent-replies--username');
+        if (username && excerpt) {
+          col2.dataset.flexFormatted = "true";
+          
+          const flexRow = document.createElement('div');
+          flexRow.className = 'recent-replies--user-excerpt-row';
+          
+          // 将新行插入到 col2 的最前面
+          col2.insertBefore(flexRow, col2.firstChild);
+          
+          // 将原有的 username 和 excerpt 移动到新的 Flex 容器中
+          flexRow.appendChild(username);
+          flexRow.appendChild(excerpt);
+        }
+      }
+    });
+  };
+
   // 守护进程：应对异步渲染
   const runTactics = () => {
     initTagMatrix();
     fetchAndRenderStats();
     cleanTagHashes();
+    formatRecentReplies(); // [新增] 调用格式化函数
   };
 
   // 路由切换时重装载
