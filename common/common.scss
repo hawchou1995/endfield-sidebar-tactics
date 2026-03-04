@@ -169,7 +169,7 @@
     align-items: baseline;
     flex-wrap: nowrap !important;
 
-    min-width: 0;           /* 允许内部元素发生截断 */
+    min-width: 0; /* 允许内部元素发生截断 */
     width: 100%;
     gap: 6px;
   }
@@ -177,7 +177,7 @@
   /* 用户名：不换行，限制最大宽度，避免挤爆评论 */
   .recent-replies--username {
     flex: 0 0 auto;
-    max-width: 18ch;        /* 你可改成 14/22，数字越大用户名越宽 */
+    max-width: 18ch; /* 你可改成 14/22，数字越大用户名越宽 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -189,7 +189,7 @@
   /* 评论：吃掉剩余空间，单行省略号 */
   .recent-replies--excerpt {
     flex: 1 1 auto;
-    min-width: 0;           /* 省略号生效的核心条件 */
+    min-width: 0; /* 省略号生效的核心条件 */
 
     display: block !important;
     -webkit-line-clamp: unset !important;
@@ -203,25 +203,41 @@
     color: var(--primary);
     line-height: 1.3;
     margin: 0 !important;
+
+    /* 防御：如果文本里有换行/多空格，也不会导致换行 */
+    word-break: keep-all;
   }
 
-  /* 话题标题：强制在下一行（保持你原来的样式即可） */
+  /* 话题标题：在下一行 */
   .recent-replies--topic-title {
     margin-top: 2px !important;
   }
-
-  /* 防御：如果 excerpt 文本里有换行/多空格，也不会导致换行 */
-  .recent-replies--excerpt {
-    word-break: keep-all;
-  }
 }
 
-  /* 周榜精简（不动） */
-  .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+/* 周榜精简（不动）——加上正确作用域 */
+.rs-top-contributors {
+  .top-contributors--user-badge {
+    font-size: 0.9em;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .top-contributors--user-likes {
-    margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--love); font-weight: bold;
+    margin-left: auto;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85em;
+    color: var(--love);
+    font-weight: bold;
     background: rgba(255, 107, 53, 0.1);
-    padding: 2px 6px; border-radius: 2px;
-    .d-icon { margin-left: 4px; font-size: 0.9em; }
+    padding: 2px 6px;
+    border-radius: 2px;
+
+    .d-icon {
+      margin-left: 4px;
+      font-size: 0.9em;
+    }
   }
 }
