@@ -146,52 +146,38 @@
   }
 }
 
-/* ============================================
-   5. 最近回复 & 周榜 (User Lists)
-   ============================================ */
-.rs-recent-replies, .rs-top-contributors {
-  .recent-replies--container, .top-contributors--container { padding: 8px; }
+/* =========================
+   Fix: 最近回复 用户名+评论同一行
+   ========================= */
+.rs-recent-replies {
 
-  .recent-replies--reply, .top-contributors--user {
-    display: flex; align-items: center; padding: 6px 4px !important; margin-bottom: 4px;
-    background: rgba(var(--primary-rgb), 0.02);
-    border-radius: 4px; border: 1px solid transparent; transition: all 0.2s;
-    &:hover {
-      background: var(--d-hover);
-      border-color: var(--tertiary-low); transform: scale(1.02);
-    }
-  }
-
-  img.avatar {
-    border-radius: 0 !important;
-    clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%);
-    width: 24px !important; height: 24px !important;
-  }
-
-  /* 让中间列可收缩（省略号的前提） */
-  .recent-replies--col:nth-child(2) {
+  /* 中间文字列：上下两行（第一行 wrapper，第二行 topic-title） */
+  .recent-replies--reply .recent-replies--col:nth-child(2) {
     margin-left: 8px;
     flex: 1;
     min-width: 0;
 
-    /* ✅ 关键：用 Grid 固定“第一行两列 + 第二行独占” */
-    display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: 6px;
-    align-items: center;
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
   }
 
-  /* 防御：如果有 <br> 强制换行，直接禁用 */
-  .recent-replies--col:nth-child(2) br { display: none !important; }
+  /* 关键：把“用户名 + 评论摘要”这一行变为单行 flex */
+  .recent-replies--content-wrapper {
+    display: flex !important;
+    flex-direction: row;
+    align-items: baseline;
+    flex-wrap: nowrap !important;
 
-  /* ✅ 用户名：尽量抓“第一项链接”（常见结构是 <a> 开头） */
-  .recent-replies--col:nth-child(2) > a:first-child,
-  .recent-replies--col:nth-child(2) > span:first-child {
-    grid-column: 1;
-    grid-row: 1;
+    min-width: 0;           /* 允许内部元素发生截断 */
+    width: 100%;
+    gap: 6px;
+  }
 
-    max-width: 18ch;          /* 关键：别让用户名无限侵占评论空间 */
+  /* 用户名：不换行，限制最大宽度，避免挤爆评论 */
+  .recent-replies--username {
+    flex: 0 0 auto;
+    max-width: 18ch;        /* 你可改成 14/22，数字越大用户名越宽 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -200,14 +186,11 @@
     color: var(--primary);
   }
 
-  /* ✅ 评论：固定在第一行第二列，且保证省略号可靠 */
+  /* 评论：吃掉剩余空间，单行省略号 */
   .recent-replies--excerpt {
-    grid-column: 2;
-    grid-row: 1;
+    flex: 1 1 auto;
+    min-width: 0;           /* 省略号生效的核心条件 */
 
-    min-width: 0; /* 省略号核心 */
-
-    /* 清掉旧的 line-clamp/盒模型，防止只显示几个字就变 ... */
     display: block !important;
     -webkit-line-clamp: unset !important;
     -webkit-box-orient: unset !important;
@@ -222,36 +205,16 @@
     margin: 0 !important;
   }
 
-  /* ✅ 话题标题：强制第二行整行占满 */
+  /* 话题标题：强制在下一行（保持你原来的样式即可） */
   .recent-replies--topic-title {
-    grid-column: 1 / -1;
-    grid-row: 2;
-
-    margin-top: 4px !important;
-    .recent-replies--topic-link {
-      font-size: 0.75em;
-      font-weight: 600;
-      color: var(--tertiary);
-      opacity: 0.8;
-      display: block;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: opacity 0.2s;
-      &:hover { opacity: 1; }
-    }
+    margin-top: 2px !important;
   }
 
-  /* 右侧时间（通常不在 col2 内，这里保留原样） */
-  .recent-replies--date {
-    font-size: 0.75em;
-    font-family: "JetBrains Mono", monospace;
-    color: var(--quaternary);
-    opacity: 0.8;
-    margin-left: 6px;
-    white-space: nowrap;
-    flex-shrink: 0;
+  /* 防御：如果 excerpt 文本里有换行/多空格，也不会导致换行 */
+  .recent-replies--excerpt {
+    word-break: keep-all;
   }
+}
 
   /* 周榜精简（不动） */
   .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
