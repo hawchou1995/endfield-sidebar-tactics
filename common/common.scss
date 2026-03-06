@@ -102,7 +102,7 @@
 }
 
 /* ==========================================================================
-   各模块内部防线净化 (去除多余框体与间隙)
+   各模块内部防线净化 (修复版：恢复自适应与呼吸感)
    ========================================================================== */
 
 /* A. 热门标签净化 */
@@ -112,9 +112,11 @@
 }
 
 .popular-tags__grid {
-  padding: 0 !important; gap: 8px !important;
+  display: grid !important; /* [核心修复]: 重新点火网格排版引擎！ */
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   grid-auto-rows: 26px;
+  gap: 8px !important; 
+  padding: 4px 6px !important; /* 增加左右微量安全间隙，防止标签紧贴外壳 */
 }
 
 .popular-tags__tag {
@@ -153,7 +155,7 @@
 .popular-tags__tag-count { position: absolute; top: -4px; right: -4px; font-size: 9px; font-weight: 700; padding: 1px 4px; background: var(--quaternary); color: var(--secondary); border-radius: 2px; pointer-events: none; }
 
 /* B. 站点统计净化 */
-.sidebar-stats-block { padding: 0 !important; } /* 剥除多余内边距 */
+.sidebar-stats-block { padding: 0 6px !important; } /* 赋予少许呼吸感 */
 .sidebar-stats-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; padding: 0; margin: 0; }
 .sidebar-stat-item {
   box-sizing: border-box; padding: 6px 8px;
@@ -171,7 +173,7 @@
   .tag-topics__container { padding: 0 !important; }
   .tag-topics__topic {
     display: flex; align-items: center; 
-    padding: 8px 0 !important; /* 上下预留舒适空间 */
+    padding: 8px 8px !important; /* [核心修复]: 恢复左右呼吸感 */
     border-bottom: 1px dashed var(--primary-low) !important; 
     transition: all 0.2s;
     &:last-child { border-bottom: none !important; }
@@ -190,10 +192,10 @@
 .rs-recent-replies {
   ul { padding: 0 !important; margin: 0 !important; list-style: none !important; }
   li.recent-replies--reply {
-    padding: 8px 0 !important; /* 统一列表间距 */
+    padding: 10px 8px !important; /* [核心修复]: 恢复上下10px、左右8px的安全间距，拒绝挤眉弄眼 */
     margin: 0 !important;
     border-bottom: 1px dashed var(--primary-very-low) !important;
-    background: transparent !important; /* 剥除单行的底色，融入大背景 */
+    background: transparent !important; 
     &:last-child { border-bottom: none !important; }
   }
 
@@ -210,7 +212,11 @@
 /* E. 活跃榜单修饰 */
 .rs-top-contributors {
   ul { padding: 0 !important; margin: 0 !important; }
-  li { padding: 6px 0 !important; border-bottom: 1px dashed var(--primary-very-low) !important; &:last-child { border-bottom: none !important; } }
+  li { 
+    padding: 8px 8px !important; /* [核心修复]: 恢复左右8px安全间距 */
+    border-bottom: 1px dashed var(--primary-very-low) !important; 
+    &:last-child { border-bottom: none !important; } 
+  }
   .top-contributors--user-badge { font-size: 0.9em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
   .top-contributors--user-likes { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--love); font-weight: bold; background: rgba(255, 107, 53, 0.1); padding: 2px 6px; border-radius: 2px; .d-icon { margin-left: 4px; font-size: 0.9em; } }
 }
