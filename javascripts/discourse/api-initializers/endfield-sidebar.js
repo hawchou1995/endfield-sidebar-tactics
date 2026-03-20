@@ -1,25 +1,37 @@
 import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer("0.8", (api) => {
-  
+
   // ==========================================
-  // 🧩 模块 1：强化版站点统计渲染器 (加入防并发与优雅降级)
+  // 🧩 模块 1：强化版站点统计渲染器
   // ==========================================
+  const getStatsContainer = () => {
+    // 1. 尝试精确定位
+    let el = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
+    if (el) return el;
+    
+    // 2. 模糊定位 (对抗 Discourse DOM 结构更新)：寻找包含特定文字的通用自定义模块
+    const customBlocks = document.querySelectorAll('.rs-custom-html');
+    for (let block of customBlocks) {
+      if (block.textContent.includes('站点统计') || block.textContent.includes('正在同步数据')) {
+        return block;
+      }
+    }
+    return null;
+  };
+
   const fetchAndRenderStats = async (container) => {
-    // 【防御性验证】如果容器不存在，或者正在加载中，或者已经加载完成，则直接阻断
     if (!container || container.dataset.statsLoaded === "true" || container.dataset.statsLoaded === "loading") {
       return;
     }
 
-    // 上锁：声明当前处于加载态，防止网络慢时重复触发
-    container.dataset.statsLoaded = "loading";
+    container.dataset.statsLoaded = "loading"; // 上锁防并发
 
     try {
       const response = await fetch("/about.json");
       if (!response.ok) throw new Error(`[Tactics] HTTP Error: ${response.status}`);
       const data = await response.json();
 
-      // 【零信任假设】严格校验数据路径，防止 JSON 结构意外变更导致 JS 崩溃
       const s = data?.about?.stats;
       const canSee = data?.about?.can_see_about_stats;
 
@@ -27,7 +39,6 @@ export default apiInitializer("0.8", (api) => {
         throw new Error("[Tactics] No permission or missing stats data.");
       }
 
-      // 数据映射矩阵，强制类型转换防止 toLocaleString 报错
       const statsMap = [
         { label: "TOPICS", value: Number(s.topics_count) || 0 },
         { label: "POSTS", value: Number(s.posts_count) || 0 },
@@ -43,67 +54,133 @@ export default apiInitializer("0.8", (api) => {
       });
       html += '</div>';
       
-      // DOM 注入策略分发
+      // 统一注入标准结构，完美适配你的 CSS
       if(container.id === 'about-stats-content') {
            container.innerHTML = html;
       } else {
            container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content">${html}</div>`;
       }
       
-      // 成功解锁
-      container.dataset.statsLoaded = "true";
+      container.dataset.statsLoaded = "true"; // 成功解锁
 
     } catch (err) {
       console.warn(err.message);
-      // 【优雅降级】失败时显示离线网格并重置锁，允许未来重试
-      container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content" style="padding:10px;text-align:center;color:var(--primary-medium);font-size:12px;">[ DATA OFFLINE / PERMISSION DENIED ]</div>`;
+      container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content" style="padding:10px;text-align:center;color:var(--primary-medium);font-size:12px;">[ DATA OFFLINE ]</div>`;
       container.dataset.statsLoaded = "error"; 
     }
   };
 
   // ==========================================
-  // 🧩 模块 2：标签清理与其他视图操作 (保持你原有的逻辑结构)
+  // 🧩 模块 2：标签词云矩阵初始化 (完整恢复)
   // ==========================================
-  // (此处省略 initTagMatrix 和 cleanTagHashes 的具体实现以保持篇幅，请保留你原始的这两个函数代码)
-  const runTactics = () => {
-    // initTagMatrix(); // 你的原有函数
-    // cleanTagHashes(); // 你的原有函数
+  const initTagMatrix = () => {
+    const container = document.querySelector('.popular-tags__container');
+    if (!container || container.dataset.initMatrix === "true") return;
+
+    let tags = Array.from(container.querySelectorAll('.popular-tags__tag'));
+    if (tags.length === 0) return;
+
+    container.dataset.initMatrix = "true";
+    const viewAllBtn = container.parentElement.querySelector('.popular-tags__view-all');
+
+    const grid = document.createElement('div');
+    grid.className = 'popular-tags__grid';
+    
+    tags.forEach((tag, index) => {
+      const isHot = index < 5;
+      tag.dataset.hot = isHot;
+      
+      const iconSpan = tag.querySelector('.tag-icon'); 
+      const svgIcon = tag.querySelector('svg.d-icon');
+      
+      let pureText = "";
+      tag.childNodes.forEach(node => {
+        if (node.nodeType === 3) pureText += node.textContent;
+      });
+      pureText = pureText.trim();
+      
+      const isLongTag = pureText.length > 8;
+      
+      const textWrapper = document.createElement('span');
+      textWrapper.className = 'popular-tags__tag-text';
+      textWrapper.textContent = pureText;
+      textWrapper.dataset.text = pureText;
+      
+      tag.innerHTML = '';
+      if (iconSpan) tag.appendChild(iconSpan);
+      else if (svgIcon) tag.appendChild(svgIcon);
+      tag.appendChild(textWrapper);
+      
+      if (isLongTag) tag.classList.add('long-tag');
+      
+      const count = tag.querySelector('.badge-category');
+      if (count) {
+        const badge = document.createElement('span');
+        badge.className = 'popular-tags__tag-count';
+        badge.textContent = count.textContent.trim();
+        tag.appendChild(badge);
+        count.style.display = 'none'; 
+      }
+      grid.appendChild(tag);
+    });
+    
+    container.innerHTML = '';
+    container.appendChild(grid);
+    
+    // 注入扫描线
+    const scanLine = document.createElement('div');
+    scanLine.style.cssText = `position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--tertiary-low), transparent); animation: scan 4s linear infinite; pointer-events: none; z-index: 1;`;
+    grid.parentElement.appendChild(scanLine);
+    
+    if(!document.getElementById('endfield-scan-style')){
+        const style = document.createElement('style');
+        style.id = 'endfield-scan-style';
+        style.textContent = `@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }`;
+        document.head.appendChild(style);
+    }
   };
 
   // ==========================================
-  // 🧩 模块 3：零漏斗 DOM 监视器引擎 (彻底抛弃 setTimeout)
+  // 🧩 模块 3：清理 # 标签前缀 (完整恢复)
+  // ==========================================
+  const cleanTagHashes = () => {
+    document.querySelectorAll('.tag-topics__heading').forEach(h => {
+      const txt = h.textContent.trim();
+      if (txt.startsWith('#')) h.textContent = txt.substring(1);
+    });
+  };
+
+  // 守护进程组装
+  const runTactics = () => {
+    initTagMatrix();
+    cleanTagHashes();
+  };
+
+  // ==========================================
+  // 🧩 模块 4：零漏斗 DOM 监视器引擎
   // ==========================================
   const startTacticsObserver = () => {
-    // 防止重复实例化 Observer
     if (window.endfieldTacticsObserver) return;
 
-    // 监听整个 body 及其子树，捕获异步生成的侧边栏
-    const observer = new MutationObserver((mutations) => {
-      // 降低计算频率：一旦在变动中发现目标，立刻触发并由 dataset 锁阻断重复渲染
-      const statsContainer = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
-      
-      if (statsContainer && statsContainer.dataset.statsLoaded !== "true") {
+    const observer = new MutationObserver(() => {
+      const statsContainer = getStatsContainer();
+      if (statsContainer && statsContainer.dataset.statsLoaded !== "true" && statsContainer.dataset.statsLoaded !== "loading") {
         fetchAndRenderStats(statsContainer);
       }
-      
-      runTactics(); // 触发其他渲染逻辑
+      runTactics(); 
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
     window.endfieldTacticsObserver = observer;
   };
 
-  // 启动观察者
   startTacticsObserver();
   
-  // ==========================================
-  // 🧩 模块 4：轮询更新服务 (10分钟自动刷新)
-  // ==========================================
+  // 定时轮询
   if (window.endfieldStatUpdater) clearInterval(window.endfieldStatUpdater);
   window.endfieldStatUpdater = setInterval(() => {
-      const container = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
+      const container = getStatsContainer();
       if (container) {
-        // 重置状态锁以强制拉取新数据
         container.dataset.statsLoaded = "false";
         fetchAndRenderStats(container);
       }
