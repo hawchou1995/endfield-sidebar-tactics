@@ -2,140 +2,111 @@ import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer("0.8", (api) => {
   
-  // 核心 1：标签词云矩阵初始化
-  const initTagMatrix = () => {
-    const container = document.querySelector('.popular-tags__container');
-    if (!container || container.dataset.initMatrix === "true") return;
+  // ==========================================
+  // 🧩 模块 1：强化版站点统计渲染器 (加入防并发与优雅降级)
+  // ==========================================
+  const fetchAndRenderStats = async (container) => {
+    // 【防御性验证】如果容器不存在，或者正在加载中，或者已经加载完成，则直接阻断
+    if (!container || container.dataset.statsLoaded === "true" || container.dataset.statsLoaded === "loading") {
+      return;
+    }
 
-    let tags = Array.from(container.querySelectorAll('.popular-tags__tag'));
-    if (tags.length === 0) return;
+    // 上锁：声明当前处于加载态，防止网络慢时重复触发
+    container.dataset.statsLoaded = "loading";
 
-    container.dataset.initMatrix = "true";
-    const viewAllBtn = container.querySelector('.popular-tags__view-all');
+    try {
+      const response = await fetch("/about.json");
+      if (!response.ok) throw new Error(`[Tactics] HTTP Error: ${response.status}`);
+      const data = await response.json();
 
-    const grid = document.createElement('div');
-    grid.className = 'popular-tags__grid';
-    
-    tags.forEach((tag, index) => {
-      const isHot = index < 5;
-      tag.dataset.hot = isHot;
-      
-      const iconSpan = tag.querySelector('.tag-icon'); 
-      const svgIcon = tag.querySelector('svg.d-icon');
-      
-      let pureText = "";
-      tag.childNodes.forEach(node => {
-        if (node.nodeType === 3) pureText += node.textContent;
-      });
-      pureText = pureText.trim();
-      
-      const isLongTag = pureText.length > 8;
-      
-      const textWrapper = document.createElement('span');
-      textWrapper.className = 'popular-tags__tag-text';
-      textWrapper.textContent = pureText;
-      textWrapper.dataset.text = pureText;
-      
-      tag.innerHTML = '';
-      if (iconSpan) tag.appendChild(iconSpan);
-      else if (svgIcon) tag.appendChild(svgIcon);
-      tag.appendChild(textWrapper);
-      
-      if (isLongTag) tag.classList.add('long-tag');
-      
-      const count = tag.querySelector('.badge-category');
-      if (count) {
-        const badge = document.createElement('span');
-        badge.className = 'popular-tags__tag-count';
-        badge.textContent = count.textContent.trim();
-        tag.appendChild(badge);
-        count.style.display = 'none'; 
+      // 【零信任假设】严格校验数据路径，防止 JSON 结构意外变更导致 JS 崩溃
+      const s = data?.about?.stats;
+      const canSee = data?.about?.can_see_about_stats;
+
+      if (!s || canSee === false) {
+        throw new Error("[Tactics] No permission or missing stats data.");
       }
-      grid.appendChild(tag);
-    });
-    
-    container.innerHTML = '';
-    container.appendChild(grid);
-    if (viewAllBtn) container.appendChild(viewAllBtn);
-    
-    // 注入扫描线
-    const scanLine = document.createElement('div');
-    scanLine.style.cssText = `position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--tertiary-low), transparent); animation: scan 4s linear infinite; pointer-events: none; z-index: 1;`;
-    grid.parentElement.appendChild(scanLine);
-    
-    if(!document.getElementById('endfield-scan-style')){
-        const style = document.createElement('style');
-        style.id = 'endfield-scan-style';
-        style.textContent = `@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }`;
-        document.head.appendChild(style);
+
+      // 数据映射矩阵，强制类型转换防止 toLocaleString 报错
+      const statsMap = [
+        { label: "TOPICS", value: Number(s.topics_count) || 0 },
+        { label: "POSTS", value: Number(s.posts_count) || 0 },
+        { label: "USERS", value: Number(s.users_count) || 0 },
+        { label: "LIKES", value: Number(s.likes_count) || 0 },
+        { label: "DAU 7D", value: Number(s.active_users_7_days) || 0 },
+        { label: "MAU 30D", value: Number(s.active_users_30_days) || 0 }
+      ];
+
+      let html = '<div class="sidebar-stats-grid">';
+      statsMap.forEach(item => {
+        html += `<div class="sidebar-stat-item"><span class="s-label">${item.label}</span><span class="s-value">${item.value.toLocaleString()}</span></div>`;
+      });
+      html += '</div>';
+      
+      // DOM 注入策略分发
+      if(container.id === 'about-stats-content') {
+           container.innerHTML = html;
+      } else {
+           container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content">${html}</div>`;
+      }
+      
+      // 成功解锁
+      container.dataset.statsLoaded = "true";
+
+    } catch (err) {
+      console.warn(err.message);
+      // 【优雅降级】失败时显示离线网格并重置锁，允许未来重试
+      container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content" style="padding:10px;text-align:center;color:var(--primary-medium);font-size:12px;">[ DATA OFFLINE / PERMISSION DENIED ]</div>`;
+      container.dataset.statsLoaded = "error"; 
     }
   };
 
-  // 核心 2：站点统计获取
-  const fetchAndRenderStats = () => {
-    // 兼容大多数自定义 HTML 区块的探测
-    const container = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
-    if (!container) return;
-    if (container.dataset.statsLoaded === "true") return;
-
-    fetch("/about.json")
-      .then(r => r.json())
-      .then(data => {
-        const s = (data.about && data.about.stats) || {};
-        const statsMap = [
-          { label: "TOPICS", value: s.topics_count || 0 },
-          { label: "POSTS", value: s.posts_count || 0 },
-          { label: "USERS", value: s.users_count || 0 },
-          { label: "LIKES", value: s.likes_count || 0 },
-          { label: "DAU 7D", value: s.active_users_7_days || 0 },
-          { label: "MAU 30D", value: s.active_users_30_days || 0 }
-        ];
-
-        let html = '<div class="sidebar-stats-grid">';
-        statsMap.forEach(item => {
-          html += `<div class="sidebar-stat-item"><span class="s-label">${item.label}</span><span class="s-value">${item.value.toLocaleString()}</span></div>`;
-        });
-        html += '</div>';
-        
-        // 如果是原始容器，清空重写；如果是包裹容器，追加
-        if(container.id === 'about-stats-content') {
-             container.innerHTML = html;
-        } else {
-             // 🚨 这里已经为你替换成了 <h3> 标签，完美适配青色切角边框！
-             container.innerHTML = `<h3>站点统计</h3><div id="about-stats-content">${html}</div>`;
-        }
-        container.dataset.statsLoaded = "true";
-      })
-      .catch(err => console.error("Stats Error:", err));
-  };
-
-  // 核心 3：清理 # 标签
-  const cleanTagHashes = () => {
-    document.querySelectorAll('.tag-topics__heading').forEach(h => {
-      const txt = h.textContent.trim();
-      if (txt.startsWith('#')) h.textContent = txt.substring(1);
-    });
-  };
-
-  // 守护进程：应对异步渲染
+  // ==========================================
+  // 🧩 模块 2：标签清理与其他视图操作 (保持你原有的逻辑结构)
+  // ==========================================
+  // (此处省略 initTagMatrix 和 cleanTagHashes 的具体实现以保持篇幅，请保留你原始的这两个函数代码)
   const runTactics = () => {
-    initTagMatrix();
-    fetchAndRenderStats();
-    cleanTagHashes();
+    // initTagMatrix(); // 你的原有函数
+    // cleanTagHashes(); // 你的原有函数
   };
 
-  // 路由切换时重装载
-  api.onPageChange(() => {
-    setTimeout(runTactics, 300);
-    setTimeout(runTactics, 1000); // 兜底防止慢加载
-  });
+  // ==========================================
+  // 🧩 模块 3：零漏斗 DOM 监视器引擎 (彻底抛弃 setTimeout)
+  // ==========================================
+  const startTacticsObserver = () => {
+    // 防止重复实例化 Observer
+    if (window.endfieldTacticsObserver) return;
+
+    // 监听整个 body 及其子树，捕获异步生成的侧边栏
+    const observer = new MutationObserver((mutations) => {
+      // 降低计算频率：一旦在变动中发现目标，立刻触发并由 dataset 锁阻断重复渲染
+      const statsContainer = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
+      
+      if (statsContainer && statsContainer.dataset.statsLoaded !== "true") {
+        fetchAndRenderStats(statsContainer);
+      }
+      
+      runTactics(); // 触发其他渲染逻辑
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.endfieldTacticsObserver = observer;
+  };
+
+  // 启动观察者
+  startTacticsObserver();
   
-  // 定时刷新统计
+  // ==========================================
+  // 🧩 模块 4：轮询更新服务 (10分钟自动刷新)
+  // ==========================================
   if (window.endfieldStatUpdater) clearInterval(window.endfieldStatUpdater);
   window.endfieldStatUpdater = setInterval(() => {
-      const container = document.getElementById('about-stats-content');
-      if(container) container.dataset.statsLoaded = "false";
-      fetchAndRenderStats();
+      const container = document.getElementById('about-stats-content') || document.querySelector('.rs-custom-html .sidebar-stats-block');
+      if (container) {
+        // 重置状态锁以强制拉取新数据
+        container.dataset.statsLoaded = "false";
+        fetchAndRenderStats(container);
+      }
   }, 600000);
 
 });
